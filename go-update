@@ -1,0 +1,192 @@
+#!/bin/bash
+
+# Author: Antonino Catinello
+# License: BSD
+# Website: https://antonino.catinello.eu/git
+# Bash script to install Go using the offical golang.org packages for your unprivileged user.
+# Requirements in $PATH: bash, awk, tar, tr, uname, grep, curl, sha256sum, rm, basename
+# It probably works with freebsd or macos too. I use it only on linux and amd64/arm architectures though.
+
+
+_dot() {
+  if [ -z $SILENT ]; then
+    echo -n "→ "
+  fi
+}
+
+# handle message output
+# $1 = value
+# $2 = type error/neutral/success
+_msg() {
+  if [ -z $SILENT ]; then
+    if [ "$2" == "err" ]; then
+      echo -e "\033[0;31m$1\033[0m"
+    elif [ "$2" == "neu" ]; then
+      echo $1
+    else
+      echo -e "\033[0;32m$1\033[0m"
+    fi
+  fi
+}
+
+# set global constants
+_constants() {
+  _dot
+  ARCH=$(uname -m)
+  if [ "$ARCH" == "x86_64" ]; then
+    ARCH="amd64"
+  elif [ "${ARCH:0:4}" == "armv" ]; then
+    ARCH="arm"
+  fi
+  OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+  OSARCH="$OS-$ARCH"
+  #OSARCH="linux-amd64"
+  #OSARCH="linux-arm"
+  TMPNAME="$RANDOM"
+  _msg "You are using a $OSARCH system." "neu"
+}
+
+# request info from golang.org to identify latest release
+_request() {
+  _dot
+  local IL=$(curl -s https://golang.org/dl/ | grep -A5 $OSARCH | grep -A5 "<td class" | tr '\n' ' ' | awk '{print $4" "$9}')
+  if [ $? != 0 ]; then
+    _msg "Fetching information from golang.org failed." "err"
+    exit 1
+  fi
+  LINK=$(echo $IL | awk -F'"' '{print $2}')
+  SHA=$(echo $IL | awk '{print $2}' | awk -F'>' '{print $3}' | awk -F'<' '{print $1}')
+  _msg "Fetching information from golang.org."
+}
+
+# check installed go version against latest release info
+_check() {
+  _dot
+  local LATEST=$(echo $LINK | awk -F'go/' '{print $2}' | awk -F'.' '{print $1"."$2"."$3}')
+  go version &>/dev/null
+  if [ $? != 0 ]; then
+    _msg "Installing $LATEST."
+    # go command is missing leave check and run install
+    return
+  fi
+
+  GO=$(go version | awk '{print $3}')
+  if [ "$LATEST" == "$GO" ]; then
+    _msg "Latest $LATEST version is already installed."
+    exit 0
+  fi
+  _msg "Upgrading from $GO to $LATEST."
+}
+
+# download the latest golang tools archive and verify by given hash
+_download() {
+  _dot
+  cd /tmp/
+  curl -s -O $LINK
+  if [ $? != 0 ]; then
+    _msg "Download of $LINK failed." "err"
+    exit 1
+  fi
+  _msg "Download of $LINK was successful"
+
+  _dot
+  if [ "$SHA" != "$(sha256sum /tmp/$(basename $LINK) | awk '{print $1}')" ]; then
+    _msg "Verification of archive failed." "err"
+    exit 1
+  fi
+  _msg "Verfication of archive succeeded."
+}
+
+# handle paths for the calling user
+_paths() {
+  _dot
+  if [ -d $HOME/.go ]; then
+    rm -r $HOME/.go
+  fi
+
+  mkdir -p $HOME/.$TMPNAME
+  if [ ! -d $HOME/go ]; then
+    mkdir -p $HOME/go/{bin,pkg,src}
+  fi
+  _msg "Go paths: GOROOT: $HOME/.go | GOPATH: $HOME/go" "neu"
+}
+
+# extract the archive to users home
+_extract() {
+  _dot
+  tar -C "$HOME/.$TMPNAME" -xzf /tmp/$(basename $LINK)
+  if [ $? != 0 ]; then
+    _msg "Extraction failed." "err"
+    exit 1
+  fi
+  mv $HOME/.$TMPNAME/go $HOME/.go
+  _msg "Extraction completed."
+}
+
+# manipulate users bashrc to use appropiate go paths
+_setenv() {
+  _dot
+  if [ ! -e $HOME/.bashrc ]; then
+    touch $HOME/.bashrc
+  fi
+
+  grep 'export GOROOT=$HOME/.go' $HOME/.bashrc &>/dev/null
+  if [ $? != 0 ]; then
+    echo 'export GOROOT=$HOME/.go' >> $HOME/.bashrc
+  fi
+  grep 'export PATH=$PATH:$GOROOT/bin' $HOME/.bashrc &>/dev/null
+  if [ $? != 0 ]; then
+    echo 'export PATH=$PATH:$GOROOT/bin' >> $HOME/.bashrc
+  fi
+  grep 'export GOPATH=$HOME/go' $HOME/.bashrc &>/dev/null
+  if [ $? != 0 ]; then
+    echo 'export GOPATH=$HOME/go' >> $HOME/.bashrc
+  fi
+  grep 'export PATH=$PATH:$GOPATH/bin' $HOME/.bashrc &>/dev/null
+  if [ $? != 0 ]; then
+    echo 'export PATH=$PATH:$GOPATH/bin' >> $HOME/.bashrc
+  fi
+
+  _msg "Please make sure to source $HOME/.bashrc" "neu"
+}
+
+_help() {
+  echo "$0 [OPTIONS]"
+  echo
+  echo "OPTIONS:"
+  echo "  -h Show this help."
+  echo "  -s Suppress all output."
+  echo
+  echo "BSD License | © 2018 Antonino Catinello"
+}
+
+# main process
+main() {
+  while getopts "s" opt; do
+    case $opt in
+      h)
+        _help
+        exit 0
+        ;;
+      s)
+        SILENT=true
+        ;;
+      *)
+        _help
+        exit 1
+        ;;
+    esac
+  done
+
+  _constants
+  _request
+  _check
+  _download
+  _paths
+  _extract
+  _setenv
+
+  exit 0
+}
+
+main "$@"
