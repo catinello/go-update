@@ -1,11 +1,11 @@
-go-updatee
+go-update
 ===
 
 Bash script to install or update Go using the offical golang.org packages for your unprivileged user.
 
 ## Installation:
 
-    $ wget https://raw.github.com/catinello/go-update/master/go-update
+    $ curl -O https://raw.github.com/catinello/go-update/master/go-update
     $ chmod +x go-update
     $ ./go-update
 
@@ -51,6 +51,6 @@ It probably works with freebsd or macos too. I use it only on linux and amd64/ar
 
 [&copy; Antonino Catinello][HOME] - [BSD-License][BSD]
 
-[MIT]:https://github.com/catinello/go-update/blob/master/LICENSE
+[BSD]:https://github.com/catinello/go-update/blob/master/LICENSE
 [HOME]:https://antonino.catinello.eu
 
