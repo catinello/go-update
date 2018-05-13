@@ -32,7 +32,7 @@ First run to install Go to your users home:
     → Fetching information from golang.org. ✓
     → Decide on procedure: Installing go1.10.1. ✓
     → Download of https://dl.google.com/go/go1.10.1.linux-amd64.tar.gz ✓
-    → Verify given hash checksums. ✓
+    → Verify given checksums. ✓
     → Set Go paths: GOROOT: /home/catinello/.go | GOPATH: /home/catinello/go ✓
     → Extracting the Go package. ✓
     → Adding environment variables to your bash resource configuration. ✓
@@ -44,8 +44,8 @@ To update just retrigger, like in this example from 1.10.1 to 1.10.2:
     → Retrieve system information: linux-amd64 ✓
     → Fetching information from golang.org. ✓
     → Decide on procedure: Upgrading from go1.10.1 to go1.10.2. ✓
-    → Download of https://dl.google.com/go/go1.10.1.linux-amd64.tar.gz ✓
-    → Verify given hash checksums. ✓
+    → Download of https://dl.google.com/go/go1.10.2.linux-amd64.tar.gz ✓
+    → Verify given checksums. ✓
     → Set Go paths: GOROOT: /home/catinello/.go | GOPATH: /home/catinello/go ✓
     → Extracting the Go package. ✓
     → Adding environment variables to your bash resource configuration. ✓
