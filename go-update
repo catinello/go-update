@@ -159,7 +159,7 @@ _help() {
 
 # main process
 main() {
-  while getopts "s" opt; do
+  while getopts "hs" opt; do
     case $opt in
       h)
         _help
