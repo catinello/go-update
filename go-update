@@ -56,7 +56,7 @@ _request() {
 # check installed go version against latest release info
 _check() {
   _task "Decide on procedure: "
-  local LATEST=$(echo $LINK | awk -F'go/' '{print $2}' | awk -F'.' '{print $1"."$2"."$3}')
+  local LATEST=$(echo $LINK | awk -F'go/' '{print $2}' | awk -F'.' '{print $1"."$2}')
   go version &>/dev/null
   if [ $? != 0 ]; then
     _result "Installing $LATEST."
