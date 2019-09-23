@@ -28,6 +28,12 @@ _result() {
 # set global constants
 _constants() {
   _task "Retrieve system information: "
+  grep GLIBC /usr/bin/ldd > /dev/null
+  if (( $? == 1 )); then
+    _result "golang.org only provides precompiled Go packages linked against glibc." err
+    exit 1
+  fi
+
   ARCH=$(uname -m)
   if [ "$ARCH" == "x86_64" ]; then
     ARCH="amd64"
